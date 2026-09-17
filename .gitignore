@@ -6,9 +6,8 @@
 config/.mubu_trash.json
 config/*.lock
 
-# 本机参考与本机手册：留在工作区方便使用，但不公开
+# 本机参考资产：幕布前端端点表（252 条），不随仓库公开
 docs/mubu-api-endpoints.md
-skills/
 
 # ============ 运行时产物 ============
 __pycache__/
