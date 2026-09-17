@@ -51,7 +51,7 @@ python3 scripts/mubu_api.py save <doc-id> --md memory.md                 # write
 
 ```bash
 python3 scripts/mubu_api.py get <doc-id> --export markdown > vault/notes/mubu.md   # Mubu → Obsidian
-python3 scripts/mubu_api.py create --md vault/notes/mubu.md --folder <folder-id>   # Obsidian → Mubu
+python3 scripts/mubu_api.py create "Mubu note" --md vault/notes/mubu.md --folder <folder-id>   # Obsidian → Mubu
 ```
 
 **③ Auto-archive weekly meeting notes** — push `examples/weekly.md` into Mubu in one step.

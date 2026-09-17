@@ -51,7 +51,7 @@ python3 scripts/mubu_api.py save <doc-id> --md memory.md                 # 把�
 
 ```bash
 python3 scripts/mubu_api.py get <doc-id> --export markdown > vault/notes/mubu.md   # 幕布 → Obsidian
-python3 scripts/mubu_api.py create --md vault/notes/mubu.md --folder <folder-id>   # Obsidian → 幕布
+python3 scripts/mubu_api.py create "幕布笔记" --md vault/notes/mubu.md --folder <folder-id>   # Obsidian → 幕布
 ```
 
 **③ 周会纪要自动归档** —— 一步把 `examples/weekly.md` 推入幕布。
