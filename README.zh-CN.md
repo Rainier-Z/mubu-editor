@@ -67,67 +67,29 @@ flowchart LR
 
 ## 入门指南
 
-### 前提条件
+**前提**：Python 3.10+ · 你自己的幕布账号 · 一个支持 Skill 的 Agent（Codex / Claude Code）
 
-使用本项目之前，需要准备：
+```bash
+git clone https://github.com/Rainier-Z/mubu-editor.git
+cd mubu-editor
+pip install -r requirements.txt
+```
 
-- 操作系统：Windows / Linux / macOS
-- 运行环境：**Python 3.10+**
-- 外部依赖：能访问 `https://api2.mubu.com` 的网络
-- 服务凭据：**你自己的幕布账号**手机号与密码
-- Agent：支持 Skill 或能直接读仓库文件的 Agent（如 Codex / Claude Code）
+配置凭据（环境变量优先；也可写入 `config/.env.mubu`，文件权限自动 `0o600`）：
 
-### 安装
+```bash
+export MUBU_PHONE="你的手机号"
+export MUBU_PASSWORD="你的密码"
+```
 
-1. 配置幕布凭据
+把 Skill 安装给 Agent（脚本会把本仓库链接到 `~/.<agent>/skills/mubu-editor`）：
 
-   凭据**不会**作为命令行参数传递。用环境变量：
+```bash
+./install-skill.sh                       # Windows 用 ./install-skill.ps1
+AGENTS=codex,claude ./install-skill.sh   # 装到多个 Agent；MODE=copy 则复制安装
+```
 
-   ```bash
-   export MUBU_PHONE="你的手机号"
-   export MUBU_PASSWORD="你的密码"
-   ```
-
-   或写入本地文件 `config/.env.mubu`（环境变量优先；文件权限自动 `0o600`）：
-
-   ```ini
-   MUBU_PHONE=你的手机号
-   MUBU_PASSWORD=你的密码
-   ```
-
-2. 克隆仓库并安装依赖
-
-   ```bash
-   git clone https://github.com/Rainier-Z/mubu-editor.git
-   cd mubu-editor
-
-   # Linux / macOS
-   pip install -r requirements.txt -r requirements-dev.txt
-   # Windows（开发锁文件多一个 colorama）
-   pip install -r requirements.txt -r requirements-dev-windows.txt
-   ```
-
-3. 把 Skill 安装给 Agent
-
-   仓库自带安装脚本：默认用**链接**方式（改仓库立即生效），`-Copy` 则复制一份自包含副本。
-
-   ```bash
-   # Windows
-   ./install-skill.ps1                    # 链接安装到 codex
-   ./install-skill.ps1 -Agents codex,claude    # 同时装到多个 Agent
-   ./install-skill.ps1 -Copy              # 复制安装
-
-   # Linux / macOS
-   ./install-skill.sh
-   AGENTS=codex,claude ./install-skill.sh
-   MODE=copy ./install-skill.sh
-   ```
-
-   脚本会把本仓库放到 `~/.<agent>/skills/mubu-editor`，Agent 读取其中的 `SKILL.md` 就能发现本 Skill。
-4. 开始对话
-
-   之后直接用自然语言让 Agent 操作幕布，例如「列出我幕布根目录的文档」。
-
+之后直接用自然语言让 Agent 操作幕布，例如「列出我幕布根目录的文档」。
 ## 最小验证场景
 
 需要验证工具链是否通了，可以手动跑一次登录：

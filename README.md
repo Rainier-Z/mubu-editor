@@ -67,67 +67,29 @@ flowchart LR
 
 ## Getting started
 
-### Prerequisites
+**Requires**: Python 3.10+ · your own Mubu account · an agent that supports Skills (Codex / Claude Code)
 
-Before using this project you need:
+```bash
+git clone https://github.com/Rainier-Z/mubu-editor.git
+cd mubu-editor
+pip install -r requirements.txt
+```
 
-- OS: Windows / Linux / macOS
-- Runtime: **Python 3.10+**
-- Network access to `https://api2.mubu.com`
-- Credentials: your **own Mubu account** (phone + password)
-- An agent that supports Skills, or can read files from a repo (e.g. Codex / Claude Code)
+Configure credentials (env vars take precedence; you can also write `config/.env.mubu`, auto-chmod `0o600`):
 
-### Installation
+```bash
+export MUBU_PHONE="your-phone"
+export MUBU_PASSWORD="your-password"
+```
 
-1. Configure your Mubu credentials
+Install the Skill for your agent (the script links this repo into `~/.<agent>/skills/mubu-editor`):
 
-   Credentials are **never** passed as CLI arguments. Use environment variables:
+```bash
+./install-skill.sh                       # on Windows use ./install-skill.ps1
+AGENTS=codex,claude ./install-skill.sh   # several agents; MODE=copy to copy instead
+```
 
-   ```bash
-   export MUBU_PHONE="your-phone"
-   export MUBU_PASSWORD="your-password"
-   ```
-
-   …or write them to `config/.env.mubu` (env vars take precedence; the file is auto-chmod `0o600`):
-
-   ```ini
-   MUBU_PHONE=your-phone
-   MUBU_PASSWORD=your-password
-   ```
-
-2. Clone and install dependencies
-
-   ```bash
-   git clone https://github.com/Rainier-Z/mubu-editor.git
-   cd mubu-editor
-
-   # Linux / macOS
-   pip install -r requirements.txt -r requirements-dev.txt
-   # Windows (the dev lock file adds colorama)
-   pip install -r requirements.txt -r requirements-dev-windows.txt
-   ```
-
-3. Install the Skill for your agent
-
-   The repo ships an installer. It uses **link** mode by default (edits to the repo take effect immediately); `-Copy` writes a self-contained copy instead.
-
-   ```bash
-   # Windows
-   ./install-skill.ps1                    # link into codex
-   ./install-skill.ps1 -Agents codex,claude    # several agents at once
-   ./install-skill.ps1 -Copy              # copy install
-
-   # Linux / macOS
-   ./install-skill.sh
-   AGENTS=codex,claude ./install-skill.sh
-   MODE=copy ./install-skill.sh
-   ```
-
-   The script places this repo at `~/.<agent>/skills/mubu-editor`, where the agent finds `SKILL.md`.
-4. Start talking
-
-   Then ask for what you want in plain language, e.g. "list the documents in my Mubu root folder".
-
+Then just talk to your agent in plain language, e.g. "list the documents in my Mubu root folder".
 ## Minimal verification
 
 To check the toolchain is wired up, run a login by hand:
