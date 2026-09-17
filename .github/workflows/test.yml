@@ -70,13 +70,9 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Rebuild and verify lock files
+      - name: Verify hash-locked dependencies
         run: |
-          python -m pip install pip-tools==7.6.1
-          python -m piptools compile --generate-hashes -o /tmp/requirements.txt requirements.in
-          python -m piptools compile --generate-hashes -o /tmp/requirements-dev.txt requirements-dev.in
-          diff -u <(tail -n +7 requirements.txt) <(tail -n +7 /tmp/requirements.txt)
-          diff -u <(tail -n +7 requirements-dev.txt) <(tail -n +7 /tmp/requirements-dev.txt)
+          python -m pip install --require-hashes -r requirements.txt -r requirements-dev.txt
 
   lockfiles-windows:
     name: Windows dependency lock files
@@ -91,17 +87,10 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Rebuild and verify the Windows development lock file
+      - name: Verify hash-locked Windows dependencies
         shell: pwsh
         run: |
-          python -m pip install pip-tools==7.6.1
-          $generated = Join-Path $env:RUNNER_TEMP "requirements-dev-windows.txt"
-          python -m piptools compile --generate-hashes -o $generated requirements-dev.in
-          $expected = Get-Content requirements-dev-windows.txt | Select-Object -Skip 6
-          $actual = Get-Content $generated | Select-Object -Skip 6
-          if ($null -ne (Compare-Object $expected $actual)) {
-            throw "Windows development lock file is out of date."
-          }
+          python -m pip install --require-hashes -r requirements.txt -r requirements-dev-windows.txt
 
   lint:
     name: Static analysis

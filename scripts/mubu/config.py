@@ -5,7 +5,7 @@ import os
 import sys
 import time
 from contextlib import contextmanager
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Iterator, Mapping, Optional, Tuple
 from urllib.parse import urlparse
 
@@ -390,8 +390,11 @@ def _safe_local_path(path: str) -> Path:
     parts = [p for p in path.replace("\\", "/").split("/") if p not in ("", ".")]
     if ".." in parts:
         raise MubuError(f"拒绝越界路径（包含 '..'）: {path}")
-    # 2) 拒绝绝对路径
-    if os.path.isabs(path):
+    # 2) 在任意宿主系统上都拒绝绝对路径和 Windows 驱动器路径。CI 的
+    # Linux runner 也必须识别 ``C:\\...`` / UNC，不能把它们当作 cwd 下的
+    # 普通文件名。
+    windows_path = PureWindowsPath(path)
+    if os.path.isabs(path) or windows_path.is_absolute() or windows_path.drive:
         raise MubuError(f"拒绝读取绝对路径（可能越权访问系统文件）: {path}")
     # 3) 解析后的真实路径必须位于当前工作目录内（含其自身，symlink 已被 realpath 展开）
     resolved = os.path.realpath(path)

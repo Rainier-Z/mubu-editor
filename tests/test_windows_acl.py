@@ -121,10 +121,14 @@ def _sid_text(advapi32, kernel32, sid):
 
 def _assert_private_file(path):
     if os.name == "nt":
-        protected, entries, owner_sid = _windows_file_acl(path)
+        protected, entries, _owner_sid = _windows_file_acl(path)
+        current_user_sid = config._current_windows_user_sid()
         assert protected, "DACL must be protected from inherited ACEs"
-        assert set(entries) == {"S-1-5-18", owner_sid}
-        assert owner_sid != "S-1-5-18"
+        # A temporary directory can be owned by the Administrators group on a
+        # hosted runner.  The security contract is the process user's SID,
+        # which is what the implementation grants access to.
+        assert set(entries) == {"S-1-5-18", current_user_sid}
+        assert current_user_sid != "S-1-5-18"
         assert set(entries.values()) == {(0x1F01FF, 0)}
     else:
         assert stat.S_IMODE(Path(path).stat().st_mode) == 0o600

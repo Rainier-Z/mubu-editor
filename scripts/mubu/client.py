@@ -2609,6 +2609,14 @@ class MubuClient:
         stats: Dict[str, int] = {"docs": 0, "folders": 0, "errors": 0}
 
         def require_contained(path: Path) -> Path:
+            # Names are normally sanitized before this point.  Check both
+            # separator styles anyway: a faulty extension or a future caller
+            # must not turn ``..\\escape`` into a literal safe filename on a
+            # POSIX host and bypass the containment check.
+            path_parts = [part for part in str(path).replace("\\", "/").split("/")
+                          if part not in ("", ".")]
+            if ".." in path_parts:
+                raise MubuError(f"拒绝导出到输出目录之外的路径: {path}")
             resolved = path.resolve()
             try:
                 common = Path(os.path.commonpath((str(output_root), str(resolved))))
@@ -2624,7 +2632,7 @@ class MubuClient:
                 safe_name = _unique_filename(name, used_names=used_names)
                 component = f"{safe_name}.md" if is_document else safe_name
                 final_path = require_contained(parent / component)
-                used_names.add(component)
+                used_names.add(safe_name)
                 if not final_path.exists():
                     return safe_name, final_path
 
@@ -2646,11 +2654,19 @@ class MubuClient:
             folders = data.get("folders", []) or []
             docs = data.get("documents") or data.get("docs") or []
             try:
-                used_names = {entry.name for entry in current_dir.iterdir()}
+                entries = list(current_dir.iterdir())
             except OSError as e:
                 logger.warning("读取导出目录 %s 失败: %s", current_dir, e)
                 stats["errors"] += 1
                 return
+            # Files and directories occupy different namespaces (``note`` and
+            # ``note.md`` can coexist), but each namespace is compared with
+            # Windows case-insensitive semantics so exports are portable.
+            used_doc_names = {
+                entry.stem for entry in entries
+                if entry.is_file() and entry.suffix.casefold() == ".md"
+            }
+            used_folder_names = {entry.name for entry in entries if entry.is_dir()}
             for d in docs:
                 doc_id = d.get("id")
                 name = (d.get("name") or "untitled").strip()
@@ -2658,13 +2674,14 @@ class MubuClient:
                     doc = self.get_doc(doc_id)
                     md = export_markdown(doc)
                     while True:
-                        _, final_path = allocate_path(name, current_dir, used_names, True)
+                        _, final_path = allocate_path(
+                            name, current_dir, used_doc_names, True)
                         try:
                             with final_path.open("x", encoding="utf-8") as output:
                                 output.write(md)
                             break
                         except FileExistsError:
-                            used_names.add(final_path.name)
+                            used_doc_names.add(final_path.stem)
                     stats["docs"] += 1
                 except (MubuError, OSError) as e:
                     logger.warning("导出文档 %s 失败: %s", doc_id, e)
@@ -2674,12 +2691,13 @@ class MubuClient:
                 fname = (f.get("name") or "untitled").strip()
                 try:
                     while True:
-                        _, child_dir = allocate_path(fname, current_dir, used_names, False)
+                        _, child_dir = allocate_path(
+                            fname, current_dir, used_folder_names, False)
                         try:
                             child_dir.mkdir(exist_ok=False)
                             break
                         except FileExistsError:
-                            used_names.add(child_dir.name)
+                            used_folder_names.add(child_dir.name)
                     require_contained(child_dir)
                     stats["folders"] += 1
                     walk(fid, child_dir, depth + 1)

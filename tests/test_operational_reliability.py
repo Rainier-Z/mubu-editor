@@ -61,9 +61,11 @@ class OperationalReliabilityTests(unittest.TestCase):
         outputs = [path.relative_to(self.root).as_posix().casefold()
                    for path in self.root.rglob("*")]
         self.assertEqual(len(outputs), len(set(outputs)))
+        exported_docs = sorted(self.root.glob("*.md"))
+        self.assertEqual(len(exported_docs), 4)
+        self.assertEqual(
+            len({path.name.casefold() for path in exported_docs}), len(exported_docs))
         self.assertTrue((self.root / "A_B.md").read_text(encoding="utf-8"))
-        self.assertTrue((self.root / "A_B_2.md").exists())
-        self.assertTrue((self.root / "a_b_2.md").exists())
         self.assertFalse(any(".." in part for output in outputs for part in output.split("/")))
 
     def test_export_tree_never_overwrites_existing_output(self):
