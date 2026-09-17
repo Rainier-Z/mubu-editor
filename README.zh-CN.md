@@ -82,12 +82,15 @@ export MUBU_PHONE="你的手机号"
 export MUBU_PASSWORD="你的密码"
 ```
 
-把 Skill 安装给 Agent（脚本会把本仓库链接到 `~/.<agent>/skills/mubu-editor`）：
+把 Skill 安装给 Agent —— **目标目录由你决定**：
 
 ```bash
-./install-skill.sh                       # Windows 用 ./install-skill.ps1
-AGENTS=codex,claude ./install-skill.sh   # 装到多个 Agent；MODE=copy 则复制安装
+./install-skill.sh ~/.codex/skills/mubu-editor          # 链接安装（改仓库立即生效）
+./install-skill.sh /path/to/skills/mubu-editor          # 放哪都行
+./install-skill.sh ~/.codex/skills/mubu-editor copy     # 复制安装（自包含副本）
 ```
+
+Windows 用 `./install-skill.ps1 -Destination <目标目录>`，加 `-Copy` 则复制。
 
 之后直接用自然语言让 Agent 操作幕布，例如「列出我幕布根目录的文档」。
 ## 最小验证场景

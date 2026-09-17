@@ -2,27 +2,21 @@
 .SYNOPSIS
     把 mubu-editor 安装成 AI Agent 的 Skill。
 .DESCRIPTION
-    默认用「链接」方式（改仓库立即生效，适合开发）；-Copy 则复制一份自包含的副本。
-    安装目标为 <用户目录>\.<agent>\skills\<名称>。安装后 Agent 会读取该目录下的 SKILL.md。
+    Skill 没有包管理器："安装"= 把含 SKILL.md 的目录放进 Agent 会扫描的 skills
+    目录。本脚本替你完成这一步：默认建目录联接（改仓库立即生效），-Copy 则复制
+    一份自包含副本。
 
-    依赖：本 Skill 底层是 Python CLI，装完 Skill 后还需安装 Python 依赖：
-        pip install -r requirements.txt
+    目标目录由你决定，脚本不预设任何 Agent。
 .EXAMPLE
-    ./install-skill.ps1
-    链接安装到 codex（默认）
-
-.EXAMPLE
-    ./install-skill.ps1 -Agents codex,claude -Name mubu-editor
-    同时装到多个 Agent
+    ./install-skill.ps1 -Destination "$env:USERPROFILE\.codex\skills\mubu-editor"
 
 .EXAMPLE
-    ./install-skill.ps1 -Copy
-    复制安装（自包含副本，不含 .git / 缓存 / 本机凭据目录）
+    ./install-skill.ps1 -Destination "$env:USERPROFILE\.claude\skills\mubu-editor" -Copy
 #>
 [CmdletBinding()]
 param(
-    [string[]]$Agents = @('codex'),
-    [string]$Name = 'mubu-editor',
+    [Parameter(Mandatory = $true, HelpMessage = '安装到哪个目录，例如 $env:USERPROFILE\.codex\skills\mubu-editor')]
+    [string]$Destination,
     [switch]$Copy
 )
 
@@ -30,33 +24,40 @@ $ErrorActionPreference = 'Stop'
 $repo = $PSScriptRoot
 $mode = if ($Copy) { '复制' } else { '链接' }
 
-Write-Host "mubu-editor Skill 安装（$mode 方式）" -ForegroundColor Cyan
+# 归一化为绝对路径
+$dest = [System.IO.Path]::GetFullPath($Destination)
+$repoFull = [System.IO.Path]::GetFullPath($repo)
 
-foreach ($agent in $Agents) {
-    $dest = Join-Path $env:USERPROFILE ".${agent}\skills\${Name}"
-    $parent = Split-Path $dest -Parent
-    if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+# ---- 安全护栏：绝不递归删除危险路径 ----
+$home_ = [System.IO.Path]::GetFullPath($env:USERPROFILE)
+if ($dest -eq $repoFull) { throw "拒绝：目标不能是仓库本身（$dest）" }
+if ($dest -eq [System.IO.Path]::GetPathRoot($dest)) { throw "拒绝：目标是磁盘根目录（$dest）" }
+if ($dest -eq $home_ -or $home_.StartsWith($dest.TrimEnd('\') + '\')) { throw "拒绝：目标目录不安全（$dest）" }
 
-    # 先清理已有安装（若是 junction 只删链接，不动目标）
-    if (Test-Path $dest) {
-        cmd /c rmdir "$dest" 2>$null | Out-Null
-        if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
-        Write-Host "  清理旧安装: $dest"
-    }
+Write-Host "mubu-editor Skill 安装（$mode 方式）-> $dest" -ForegroundColor Cyan
 
-    if ($Copy) {
-        $xd = @('.git', '__pycache__', '.pytest_cache', '.ruff_cache', 'config')
-        $args = @($repo, $dest, '/E', '/NFL', '/NDL', '/NJH', '/NJS', '/NP', '/XD') + $xd
-        & robocopy @args | Out-Null
-        if ($LASTEXITCODE -ge 8) { throw "robocopy 失败，退出码 $LASTEXITCODE" }
-    } else {
-        cmd /c mklink /J "$dest" "$repo" | Out-Null
-        if (-not (Test-Path (Join-Path $dest 'SKILL.md'))) { throw "链接创建失败: $dest" }
-    }
-    Write-Host "  ✅ $agent -> $dest" -ForegroundColor Green
+$parent = Split-Path $dest -Parent
+if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
+
+# 清理旧安装（junction 用 rmdir 只删链接）
+if (Test-Path $dest) {
+    cmd /c rmdir "$dest" 2>$null | Out-Null
+    if (Test-Path $dest) { Remove-Item $dest -Recurse -Force }
+    Write-Host "  已清理旧安装"
 }
 
+if ($Copy) {
+    $excl = @('.git', '__pycache__', '.pytest_cache', '.ruff_cache', 'config')
+    & robocopy $repoFull $dest /E /NFL /NDL /NJH /NJS /NP /XD @excl | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "robocopy 失败，退出码 $LASTEXITCODE" }
+} else {
+    cmd /c mklink /J "$dest" "$repoFull" | Out-Null
+}
+
+$skill = Join-Path $dest 'SKILL.md'
+if (-not (Test-Path $skill)) { throw "安装失败：$dest 下没有 SKILL.md" }
+
+Write-Host "  ✅ 完成" -ForegroundColor Green
 Write-Host ""
-Write-Host "下一步：安装 Python 依赖" -ForegroundColor Yellow
-Write-Host "  pip install -r `"$repo\requirements.txt`""
+Write-Host "下一步：pip install -r `"$repoFull\requirements.txt`""
 Write-Host "并配置凭据（环境变量 MUBU_PHONE / MUBU_PASSWORD，或 config/.env.mubu）。"

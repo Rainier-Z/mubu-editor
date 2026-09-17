@@ -82,12 +82,15 @@ export MUBU_PHONE="your-phone"
 export MUBU_PASSWORD="your-password"
 ```
 
-Install the Skill for your agent (the script links this repo into `~/.<agent>/skills/mubu-editor`):
+Install the Skill for your agent — **you choose the destination**:
 
 ```bash
-./install-skill.sh                       # on Windows use ./install-skill.ps1
-AGENTS=codex,claude ./install-skill.sh   # several agents; MODE=copy to copy instead
+./install-skill.sh ~/.codex/skills/mubu-editor          # link (repo edits take effect immediately)
+./install-skill.sh /path/to/skills/mubu-editor          # anywhere you like
+./install-skill.sh ~/.codex/skills/mubu-editor copy     # copy (self-contained)
 ```
+
+On Windows use `./install-skill.ps1 -Destination <dir>`, adding `-Copy` to copy instead.
 
 Then just talk to your agent in plain language, e.g. "list the documents in my Mubu root folder".
 ## Minimal verification
