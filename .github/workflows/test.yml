@@ -1,0 +1,123 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Linux · Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install locked dependencies
+        run: python -m pip install --require-hashes -r requirements.txt -r requirements-dev.txt
+
+      - name: Execute tests
+        run: PYTHONPATH=scripts python -m pytest -v
+
+  windows:
+    name: Windows · Python 3.13
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: scripts
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install locked dependencies
+        run: python -m pip install --require-hashes -r requirements.txt -r requirements-dev-windows.txt
+
+      - name: Execute tests
+        run: python -m pytest -v
+
+  lockfiles-linux:
+    name: Linux dependency lock files
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Rebuild and verify lock files
+        run: |
+          python -m pip install pip-tools==7.6.1
+          python -m piptools compile --generate-hashes -o /tmp/requirements.txt requirements.in
+          python -m piptools compile --generate-hashes -o /tmp/requirements-dev.txt requirements-dev.in
+          diff -u <(tail -n +7 requirements.txt) <(tail -n +7 /tmp/requirements.txt)
+          diff -u <(tail -n +7 requirements-dev.txt) <(tail -n +7 /tmp/requirements-dev.txt)
+
+  lockfiles-windows:
+    name: Windows dependency lock files
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Rebuild and verify the Windows development lock file
+        shell: pwsh
+        run: |
+          python -m pip install pip-tools==7.6.1
+          $generated = Join-Path $env:RUNNER_TEMP "requirements-dev-windows.txt"
+          python -m piptools compile --generate-hashes -o $generated requirements-dev.in
+          $expected = Get-Content requirements-dev-windows.txt | Select-Object -Skip 6
+          $actual = Get-Content $generated | Select-Object -Skip 6
+          if ($null -ne (Compare-Object $expected $actual)) {
+            throw "Windows development lock file is out of date."
+          }
+
+  lint:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Configure Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Ruff
+        run: python -m pip install ruff==0.16.7
+
+      - name: Run Ruff
+        run: ruff check scripts tests

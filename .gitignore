@@ -1,0 +1,20 @@
+# ============ 本机私有状态（本地保留，不随仓库公开）============
+# 凭据（任意层级兜底，含 config/.mubu_token、config/.env.mubu）
+.mubu_token
+.env.mubu
+# 运行时会在仓库根重建 config/（见 config.py 的默认路径解析）
+config/.mubu_trash.json
+config/*.lock
+
+# 本机参考与本机手册：留在工作区方便使用，但不公开
+docs/mubu-api-endpoints.md
+skills/
+
+# ============ 运行时产物 ============
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# 全局 gitignore 有 *.txt，会挡掉这个新建的锁文件；显式反转（CI 需要它）
+!requirements-dev-windows.txt

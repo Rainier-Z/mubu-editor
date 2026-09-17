@@ -1,0 +1,19 @@
+line-length = 100
+target-version = "py39"
+
+[lint]
+# 保守规则集：E(F/K)/F(pyflakes 真实 bug)/W(警告)/I(import 排序)
+# 显式白名单：ruff 新版新增的规则不会被自动启用，门禁判据保持稳定。
+# 收紧方式：先加规则、修完再提交，避免一次性变红。
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[lint.isort]
+# mubu 是本地包（scripts/mubu/），显式声明为首方导入，
+# 使 `import requests`（第三方）与 `from mubu.*`（首方）分属不同段、各段内部紧凑。
+known-first-party = ["mubu"]
+
+[lint.per-file-ignores]
+# 测试文件先将 scripts/ 加入模块搜索路径，随后才导入本地包；这是本地直接运行
+# pytest 时所需的初始化顺序，不能为满足静态规则而调换。
+"tests/*.py" = ["E402"]
