@@ -53,21 +53,7 @@ Agent 自己挑命令、执行、**再读回核验** —— 你不需要记任�
 | **协作与资产** | 双向链接「谁引用了我」、官方导入通道、视图切换 |
 | **导出** | OPML / FreeMind、整树导出、表格导出为 Markdown / CSV |
 
-## 工作流程
-
-```mermaid
-flowchart LR
-    A[你在对话里提出需求] --> B[Agent 读取 SKILL.md<br/>挑选可用命令]
-    B --> C[调用 mubu-editor<br/>登录 / 读取目标文档]
-    C --> D[写入改动<br/>节点级 changeset]
-    D --> E[读回文档核验]
-    E -->|一致| F[回报结果]
-    E -->|不一致| G[失败关闭<br/>报告「结果未知」交由你决定]
-```
-
 ## 入门指南
-
-**前提**：Python 3.10+ · 你自己的幕布账号 · 一个支持 Skill 的 Agent（Codex / Claude Code）
 
 ```bash
 git clone https://github.com/Rainier-Z/mubu-editor.git
@@ -92,7 +78,6 @@ export MUBU_PASSWORD="你的密码"
 
 Windows 用 `./install-skill.ps1 -Destination <目标目录>`，加 `-Copy` 则复制。
 
-之后直接用自然语言让 Agent 操作幕布，例如「列出我幕布根目录的文档」。
 ## 最小验证场景
 
 需要验证工具链是否通了，可以手动跑一次登录：
