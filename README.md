@@ -59,6 +59,7 @@ Agent 自己挑命令、执行、**再读回核验** —— 你不需要记任�
 git clone https://github.com/Rainier-Z/mubu-editor.git
 cd mubu-editor
 pip install -r requirements.txt
+./install-skill.sh <目标目录>        # 装 Skill；Windows 用 ./install-skill.ps1 -Destination <目标目录>
 ```
 
 配置凭据（环境变量优先；也可写入 `config/.env.mubu`，文件权限自动 `0o600`）：
@@ -67,16 +68,6 @@ pip install -r requirements.txt
 export MUBU_PHONE="你的手机号"
 export MUBU_PASSWORD="你的密码"
 ```
-
-把 Skill 安装给 Agent —— **目标目录由你决定**：
-
-```bash
-./install-skill.sh ~/.codex/skills/mubu-editor          # 链接安装（改仓库立即生效）
-./install-skill.sh /path/to/skills/mubu-editor          # 放哪都行
-./install-skill.sh ~/.codex/skills/mubu-editor copy     # 复制安装（自包含副本）
-```
-
-Windows 用 `./install-skill.ps1 -Destination <目标目录>`，加 `-Copy` 则复制。
 
 ## 最小验证场景
 
